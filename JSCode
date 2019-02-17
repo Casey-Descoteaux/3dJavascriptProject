@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset = "UTF-8"/>
+        <title> 3D Programming Assignment </title>
+        <style>
+        html, body
+        {
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas
+        {
+            display: block;
+        }
+        </style>
+        <script type = "text/javascript" src="/three.min.js"></script>
+        <script type = "text/javascript" src="/TrackballControls.js"></script>
+        <script>
+        
+            "use strict";
+            
+            //Variables used to create the environment and appearance 
+            var scene, camera, renderer, canvas;
+            
+            //Used to allow the user to move the container in scene
+            var controls;
+            
+            //Asks the user for the count of each shape and creates an array to hold them as well as the speed the shapes will move as given by the user
+            var sphereSpeed = prompt('How fast would you like the spheres to move?');
+            var spheres = [];
+            var sphereCount = prompt('How many bouncing spheres would you like created?');
+            var cubeSpeed = prompt ('How fast would you like the cubes to move?')
+            var cubes = [];
+            var cubeCount = prompt('How many bouncing cubes would you like created?');
+            
+            //Sets up the environment and creates the shapes indicated by user input
+            function Start()
+            {
+                //Sets the background color and initializes the scene and camera
+                renderer.setClearColor(0);
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(30, window.innerWidth/window.innerHeight, 0.1, 100);
+                
+                //Initializes the light and places it on the camera then adds the camera to the scene
+                var light = new THREE.DirectionalLight();
+                light.position.set(0, 0, 1);
+                camera.position.set(25, 40, 50);
+                camera.lookAt(scene.position);
+                camera.add(light);
+                scene.add(camera);
+                
+                //The container is the semi-transparent cube the objects will be bouncing around in and asks the user for the color
+                var container = new THREE.Mesh(
+                    new THREE.BoxGeometry(20, 20, 20), new THREE.MeshPhongMaterial(
+                        {polygonOffset: true, polygonOffsetUnits: 1, polygonOffsetFactor: 1,
+                        color: prompt('What color would you like the container to be?'), specular: 0x202020, transparent: true, opacity: 0.5
+                        })
+                    );
+                scene.add(container);
+                scene.add(new THREE.EdgesHelper (container, 0xffffff));
+                
+                //Adds the randomly colored spheres to the spheres array and to the scene
+                var sphereTemplate = new THREE.SphereGeometry(1, 25, 12);
+                for (var s = 0; s < sphereCount; s++)
+                {
+                    var sphere = {};
+                    spheres.push(sphere);
+                    sphere.obj = new THREE.Mesh(sphereTemplate, new THREE.MeshPhongMaterial({
+                        color: Math.floor(Math.random()*0x1000000), specular: 0x080808, shininess: 32
+                        })
+                    );
+                
+                sphere.x = 18 * Math.random() - 9;
+                sphere.y = 18 * Math.random() - 9;
+                sphere.z = 18 * Math.random() - 9;
+                sphere.dx = Math.random() * 6 + 2;
+                sphere.dy = Math.random() * 6 + 2;
+                sphere.dz = Math.random() * 6 + 2;
+                
+                if (Math.random() < 0.5)
+                {
+                    sphere.dx = -sphere.dx;
+                    sphere.dy = -sphere.dy;
+                    sphere.dz = -sphere.dz;
+                }
+                
+                sphere.obj.position.set (sphere.x, sphere.y, sphere.z);
+                scene.add (sphere.obj);
+                }
+                
+                //Adds the randomly colored cubes to the cubes array and to the scene
+                var cubeTemplate = new THREE.BoxGeometry(1.75, 1.75, 1.75);               
+                for (var c = 0; c < cubeCount; c++)
+                {
+                    var cube = {};
+                    cubes.push(cube);
+                    cube.obj = new THREE.Mesh(cubeTemplate, new THREE.MeshPhongMaterial({
+                        color: Math.floor(Math.random()*0x1000000), specular: 0x080808, shininess: 32
+                        })
+                    );
+                
+                cube.x = 18 * Math.random() - 9;
+                cube.y = 18 * Math.random() - 9;
+                cube.z = 18 * Math.random() - 9;
+                cube.dx = Math.random() * 6 + 2;
+                cube.dy = Math.random() * 6 + 2;
+                cube.dz = Math.random() * 6 + 2;
+                
+                if (Math.random() < 0.5)
+                {
+                    cube.dx = -cube.dx;
+                    cube.dy = -cube.dy;
+                    cube.dz = -cube.dz;
+                }
+                
+                cube.obj.position.set (cube.x, cube.y, cube.z);
+                scene.add (cube.obj);
+                }
+            }
+            
+            //Called each frame to render the scene
+            function Render()
+            {
+                renderer.render (scene, camera);
+            }
+            
+            //Called to update the position of the shapes in the scene
+            function Update()
+            {
+                //Tracks the amount of time that has passed
+                var lastUpdate = elapsedTime.getDelta();
+                
+                //For each sphere adjust the position and if the sphere is at the wall of the container make it travel in the opposite direction
+                for (var s = 0; s < sphereCount; s++)
+                {
+                    var sphere = spheres[s];
+                    
+                    sphere.x += sphere.dx * lastUpdate * sphereSpeed;
+                    sphere.y + sphere.dy * lastUpdate * sphereSpeed;
+                    sphere.z += sphere.dz * lastUpdate * sphereSpeed;
+                    
+                    if (sphere.x > 9)
+                    {
+                        sphere.x -= 2 * (sphere.x - 9);
+                        sphere.dx = -Math.abs(sphere.dx);
+                    }
+                    else if (sphere.x < -9)
+                    {
+                        sphere.x += 2 * (-9 - sphere.x);
+                        sphere.dx = Math.abs(sphere.dx);
+                    }
+                    if (sphere.y > 9)
+                    {
+                        sphere.y -= 2 * (sphere.y - 9);
+                        sphere.dy = -Math.abs(sphere.dy);
+                    }
+                    else if (sphere.y < -9)
+                    {
+                        sphere.y += 2 * (-sphere.y - 9);
+                        sphere.dy = Math.abs(sphere.dy);
+                    }
+                    if (sphere.z > 9)
+                    {
+                        sphere.z -= 2 * (sphere.z - 9);
+                        sphere.dz = -Math.abs(sphere.dz);
+                    }
+                    else if (sphere.z < -9)
+                    {
+                        sphere.z += 2 * (-sphere.z - 9);
+                        sphere.dz = Math.abs(sphere.dz);
+                    }
+                    
+                    sphere.obj.position.set (sphere.x, sphere.y, sphere.z);
+                }
+                
+                //For each cube adjust the position and if the cube is at the wall of the container make it travel in the opposite direction
+                for (var c = 0; c < cubeCount; c++)
+                {
+                    var cube = cubes[c];
+                    
+                    cube.x += cube.dx * lastUpdate * cubeSpeed;
+                    cube.y + cube.dy * lastUpdate * cubeSpeed;
+                    cube.z += cube.dz * lastUpdate * cubeSpeed;
+                    
+                    if (cube.x > 9)
+                    {
+                        cube.x -= 2 * (cube.x - 9);
+                        cube.dx = -Math.abs(cube.dx);
+                    }
+                    else if (cube.x < -9)
+                    {
+                        cube.x += 2 * (-9 - cube.x);
+                        cube.dx = Math.abs(cube.dx);
+                    }
+                    if (cube.y > 9)
+                    {
+                        cube.y -= 2 * (cube.y - 9);
+                        cube.dy = -Math.abs(cube.dy);
+                    }
+                    else if (cube.y < -9)
+                    {
+                        cube.y += 2 * (-cube.y - 9);
+                        cube.dy = Math.abs(cube.dy);
+                    }
+                    if (cube.z > 9)
+                    {
+                        cube.z -= 2 * (cube.z - 9);
+                        cube.dz = -Math.abs(cube.dz);
+                    }
+                    else if (cube.z < -9)
+                    {
+                        cube.z += 2 * (-cube.z - 9);
+                        cube.dz = Math.abs(cube.dz);
+                    }
+                    
+                    cube.obj.position.set (cube.x, cube.y, cube.z);
+                }
+            }
+            
+            var elapsedTime;
+            
+            //Calls the functions to update the scene every frame
+            function Frame()
+            {
+                Update();
+                controls.update();
+                Render();
+                requestAnimationFrame(Frame);
+            }
+    
+            //Resizes the environment if the window changes in size
+            function WindowResize()
+            {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize (window.innerWidth, window.innerHeight);
+            }
+            
+            //First function that is called and tests for compatibility
+            //If compatible initialize controls and elapsed time as well as call Start() and 
+            //starts the per frame updates
+            function Initialize()
+            {
+                try
+                {
+                    try
+                    {
+                        renderer = new THREE.WebGLRenderer({antialias: true});
+                    }
+                    catch(x)
+                    {
+                        document.body.innerHTML = "<h3><b> WebGL not found.</b><h3>";
+                        return;
+                    }
+                    
+                    canvas = renderer.domElement;
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                    window.addEventListener("resize", WindowResize, false);
+                    document.body.appendChild(canvas);
+                    
+                    elapsedTime = new THREE.Clock();
+                    Start();
+                    
+                    controls = new THREE.TrackballControls(camera, canvas);
+                    controls.noPan = true;
+                    controls.noZoom = true;
+                    
+                    requestAnimationFrame (Frame);
+                }
+                
+                catch (xx)
+                {
+                    document.body.innerHTML = "<h3><b> An error occurred: <br>" + xx + "</b></h3>";
+                }
+            }
+            
+        </script>
+    </head>
+    <body onload = "Initialize()">
+    </body>
+</html>
+
